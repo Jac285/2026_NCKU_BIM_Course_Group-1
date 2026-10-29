@@ -49,7 +49,7 @@ namespace LebrCarbon.Revit
             return Result.Succeeded;
         }
 
-        /// <summary>建立缺少的 LEBR 參數（自帶交易），回傳這次新增的參數名稱。「套用代號」也會先呼叫這裡。</summary>
+        /// <summary>建立缺少的 LEBR 參數，已存在的不重複建立。不顯示對話框；失敗時拋出例外。回傳本次新增的參數名稱。</summary>
         public static List<string> Ensure(Document doc)
         {
             var app = doc.Application;

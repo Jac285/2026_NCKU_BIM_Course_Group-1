@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
-using RevitMCP.Lebr;
+using LebrCarbon;
 
 namespace LebrCarbon.Revit
 {
@@ -197,6 +197,7 @@ namespace LebrCarbon.Revit
                 Rs = Number(info, "LEBR_Rs"),
                 CSER = Number(info, "LEBR_CSER") ?? 0,
                 LL = Number(info, "LEBR_LL") ?? 0,
+                StructureCFs = Number(info, "LEBR_CFs"),
             };
         }
 

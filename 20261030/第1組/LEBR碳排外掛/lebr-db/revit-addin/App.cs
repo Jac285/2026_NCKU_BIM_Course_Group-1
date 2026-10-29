@@ -37,6 +37,13 @@ namespace LebrCarbon
                 Image = Icon(16, "P", Color.FromRgb(0x44, 0x54, 0x6A)),
             });
             panel.AddItem(new PushButtonData(
+                "LebrProjectSettings", "專案\n設定", Assembly.GetExecutingAssembly().Location, typeof(ProjectSettingsCommand).FullName)
+            {
+                ToolTip = "設定建築條件、主結構（含估算鎖定）、非主結構與優惠係數（LL），儲存到專案資訊的 LEBR_* 參數",
+                LargeImage = Icon(32, "S", Color.FromRgb(0x2E, 0x6F, 0x9E)),
+                Image = Icon(16, "S", Color.FromRgb(0x2E, 0x6F, 0x9E)),
+            });
+            panel.AddItem(new PushButtonData(
                 "LebrCodes", "代號\nJSON", Assembly.GetExecutingAssembly().Location, typeof(Revit.CodesCommand).FullName)
             {
                 ToolTip = "把這個模型填好的 LEBR 代號匯出成 JSON，或把別人的代號 JSON 套用到這個模型（會自動建立參數）",
