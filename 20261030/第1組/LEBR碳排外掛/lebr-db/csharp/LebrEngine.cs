@@ -241,6 +241,9 @@ namespace LebrCarbon
         public List<ItemResult> Items { get; set; }
         public List<UnmappedElement> Unmapped { get; set; }
         public List<GradeMark> GradeScale { get; set; }
+        /// <summary>計算時用的整棟幾何與專案參數（匯出時附上，網頁可做輸入參數面板）。</summary>
+        public BuildingGeometry InputBuilding { get; set; }
+        public ProjectSettings InputProject { get; set; }
 
         /// <summary>給網頁用的結果格式（計畫書第八章）。</summary>
         public string ToJson()
@@ -264,6 +267,12 @@ namespace LebrCarbon
                 {
                     ["structure"] = UndergroundStructure, ["construction"] = UndergroundConstruction, ["demolition"] = UndergroundDemolition,
                 },
+                ["structure"] = StructureJson(),
+                ["inputs"] = new JObject
+                {
+                    ["building"] = InputBuilding == null ? null : JObject.FromObject(InputBuilding),
+                    ["project"] = InputProject == null ? null : JObject.FromObject(InputProject),
+                },
                 ["items"] = JArray.FromObject(Items.Select(i => new
                 {
                     code = i.Code, name = i.Name, group = i.Group, area_m2 = i.AreaM2,
@@ -280,6 +289,42 @@ namespace LebrCarbon
                 ["calculated_at"] = CalculatedAt.ToString("yyyy-MM-ddTHH:mm:ss"),
             };
             return o.ToString(Formatting.Indented);
+        }
+
+        /// <summary>
+        /// 主結構區塊，欄位依「主結構 BIM 數量法｜結果 JSON 輸出規格」v1 第 2-1 節。
+        /// method：standard（式 1～7）、bim_quantity（採 LEBR_CFs 估算值）、none（設計案未計算）。
+        /// standard 內是式 4、式 1 的參數與中間值，算不出來的為 null；基準案一律依表 4-6，採估算值時仍輸出。
+        /// bim 是 BIM 數量法明細（規格 2-2），外掛尚未輸出，固定為 null。
+        /// </summary>
+        private JObject StructureJson()
+        {
+            var d = Structure ?? new StructureDetail();
+            var b = InputBuilding ?? new BuildingGeometry();
+            var p = InputProject ?? new ProjectSettings();
+            var estimated = d.Computed && p.StructureCFs > 0;
+            var standard = d.Computed && !estimated;
+            var hasBaseline = d.BaselineC > 0;
+            Func<bool, double, JToken> v = (ok, x) => ok ? new JValue(x) : JValue.CreateNull();
+            Func<double?, JToken> n = x => x.HasValue ? new JValue(x.Value) : JValue.CreateNull();
+            return new JObject
+            {
+                ["method"] = estimated ? "bim_quantity" : standard ? "standard" : "none",
+                ["design_CFs"] = v(d.Computed, Design == null ? 0 : Design.CFs),
+                ["baseline_CFsc"] = v(hasBaseline, Baseline == null ? 0 : Baseline.CFs),
+                ["intensity"] = v(d.Computed && AFu > 0, AFu > 0 && Design != null ? Design.CFs / AFu : 0),
+                ["AFu"] = AFu,
+                ["underground_CFs"] = UndergroundStructure,
+                ["standard"] = new JObject
+                {
+                    ["I"] = n(p.I), ["SaD"] = n(p.SaD), ["Fu"] = n(p.Fu), ["L"] = n(p.L), ["D0"] = n(p.D0), ["Rs"] = n(p.Rs),
+                    ["BH"] = n(b.BH), ["Sp"] = v(standard, d.DesignSp), ["F"] = v(standard, d.DesignF),
+                    ["Rn"] = v(standard, d.Rn), ["LCCR"] = v(standard, d.Lccr), ["C"] = v(standard, d.DesignC), ["W"] = v(standard, d.DesignW),
+                    ["baseline_Sp"] = v(hasBaseline, d.BaselineSp), ["baseline_F"] = v(hasBaseline, d.BaselineF),
+                    ["baseline_C"] = v(hasBaseline, d.BaselineC), ["baseline_W"] = v(hasBaseline, d.BaselineW),
+                },
+                ["bim"] = JValue.CreateNull(),
+            };
         }
     }
 
@@ -327,6 +372,8 @@ namespace LebrCarbon
                 Groups = new List<GroupRow>(),
                 GradeScale = new List<GradeMark>(),
                 WearClass = p.WearClass,
+                InputBuilding = b,
+                InputProject = p,
                 LL = p.LL,
             };
 
