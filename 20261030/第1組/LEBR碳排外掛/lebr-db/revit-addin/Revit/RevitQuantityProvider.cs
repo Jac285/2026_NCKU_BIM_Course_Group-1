@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
-using RevitMCP.Lebr;
+using LebrCarbon;
 
 namespace LebrCarbon.Revit
 {
@@ -34,7 +34,7 @@ namespace LebrCarbon.Revit
             _notes.Clear();
 
             if (!HasParameters())
-                _notes.Add("這個專案還沒有 LEBR 參數，請先按「LEBR → 建立參數」，再填構件代號與專案資訊。");
+                _notes.Add("這個專案還沒有 LEBR 參數，請先按「LEBR → 專案設定」（會自動建立參數），再填構件代號與專案資訊。");
 
             ReadWalls();
             ReadWindows();
@@ -197,6 +197,8 @@ namespace LebrCarbon.Revit
                 Rs = Number(info, "LEBR_Rs"),
                 CSER = Number(info, "LEBR_CSER") ?? 0,
                 LL = Number(info, "LEBR_LL") ?? 0,
+                StructureCFs = Number(info, "LEBR_CFs"),
+                StructureEstimateJson = Text(info, "LEBR_EstimateJson"),
             };
         }
 
