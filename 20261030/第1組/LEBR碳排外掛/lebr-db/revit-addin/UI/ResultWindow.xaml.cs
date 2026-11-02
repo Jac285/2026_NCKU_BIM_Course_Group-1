@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Win32;
-using RevitMCP.Lebr;
+using LebrCarbon;
 using Visibility = System.Windows.Visibility; // Revit SDK 的全域 using 也有 Autodesk.Revit.DB.Visibility
 
 namespace LebrCarbon.UI
@@ -50,6 +52,36 @@ namespace LebrCarbon.UI
             if (dialog.ShowDialog(this) != true) return;
             File.WriteAllText(dialog.FileName, _result.ToJson(), new UTF8Encoding(false));
             Status.Text = "已匯出：" + dialog.FileName;
+        }
+
+        /// <summary>
+        /// 「在圖台開啟」：結果 JSON 壓縮後放在圖台網址的 #d= 後面，用預設瀏覽器開啟，並把網址複製到剪貼簿。
+        /// 圖台網址讀外掛資料夾的 dashboard_url.txt，沒有就用 DashboardLink.DefaultBaseUrl。
+        /// </summary>
+        private void OnOpenDashboard(object sender, RoutedEventArgs e)
+        {
+            var baseUrl = DashboardLink.ResolveBaseUrl(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+            var json = _result.ToJson();
+            var url = DashboardLink.Build(baseUrl, json);
+            try
+            {
+                if (url.Length > DashboardLink.MaxUrlLength)
+                {
+                    // 結果太大放不進網址：存成暫存檔，開空白圖台讓使用者按「載入 JSON」
+                    var file = Path.Combine(Path.GetTempPath(), "LEBR結果_" + _result.CalculatedAt.ToString("yyyyMMdd_HHmm") + ".json");
+                    File.WriteAllText(file, json, new UTF8Encoding(false));
+                    Process.Start(new ProcessStartInfo(baseUrl) { UseShellExecute = true });
+                    Status.Text = "結果太大，無法放進網址。已存成 " + file + "，請在圖台按「載入 JSON」選這個檔。";
+                    return;
+                }
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                try { Clipboard.SetText(url); } catch (System.Runtime.InteropServices.ExternalException) { }
+                Status.Text = "已在瀏覽器開啟圖台（" + baseUrl + "），網址已複製到剪貼簿。";
+            }
+            catch (Exception ex)
+            {
+                Status.Text = "無法開啟瀏覽器：" + ex.Message;
+            }
         }
 
         private void OnClose(object sender, RoutedEventArgs e)

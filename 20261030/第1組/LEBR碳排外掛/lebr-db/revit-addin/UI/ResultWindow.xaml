@@ -12,6 +12,8 @@
         <!-- 底部：狀態與按鈕 -->
         <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="在圖台開啟" Style="{StaticResource Secondary}" Margin="0,0,8,0" Click="OnOpenDashboard"
+                        ToolTip="用預設瀏覽器開啟碳排圖台並帶入這次的結果；網址也會複製到剪貼簿"/>
                 <Button Content="匯出結果 JSON…" Style="{StaticResource Secondary}" Margin="0,0,8,0" Click="OnExport"/>
                 <Button Content="關閉" Style="{StaticResource Primary}" IsCancel="True" Click="OnClose"/>
             </StackPanel>
